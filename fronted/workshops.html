@@ -1,0 +1,62 @@
+  <link rel="icon" href="Комфорт.ico" />
+<img src="Комфорт.png" alt="Логотип компании" width="150" />
+<head>
+  <meta charset="UTF-8">
+  <title>Информация о продукции</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Информация о продукции</h1>
+
+  <div id="workshop-cards" class="card-container"></div>
+
+  <p class="summary">Общее время изготовления: <span id="total-time"></span> часов</p>
+
+  <button onclick="history.back()">← Вернуться назад</button>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    let productId = params.get('id'); 
+
+    if (!productId) {
+      alert('Не передан ID продукта');
+      window.location.href = 'index.html';
+    }
+
+    productId = productId.split(':')[0];
+
+    fetch(`http://localhost:3000/api/workshops/product-info/${productId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert('Ошибка: ' + data.error);
+          return;
+        }
+
+        const p = data.product;
+        const cardContainer = document.getElementById('workshop-cards');
+
+        data.workshops.forEach(w => {
+          const card = document.createElement('div');
+          card.className = 'workshop-card';
+          card.innerHTML = `
+            <div class="workshop-left">
+              <div class="title">${p.type || 'Тип'} | ${p.name}</div>
+              <div>${p.article}</div>
+              <div>Минимальная стоимость для партнёра: ${p.minPrice.toFixed(2)} ₽</div>
+              <div>Основной материал: ${p.material}</div>
+            </div>
+            <div class="workshop-right">${w.timeHours} ч</div>
+          `;
+          cardContainer.appendChild(card);
+        });
+
+        document.getElementById('total-time').textContent = data.totalTime.toFixed(2);
+      })
+      .catch(err => {
+        alert('Ошибка загрузки данных');
+        console.error(err);
+      });
+  </script>
+</body>
+</html>

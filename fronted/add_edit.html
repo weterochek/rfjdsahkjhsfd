@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<link rel="icon" href="Комфорт.ico" />
+<img src="Комфорт.png" alt="Логотип компании" width="150" />
+<head>
+  <meta charset="UTF-8" />
+  <title>Добавить / Редактировать продукт</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Добавление / Редактирование продукции</h1>
+
+  <form id="product-form">
+    <label>Артикул: <input type="text" name="article" required /></label><br /><br />
+
+    <label>Тип продукции:
+      <select name="type" id="typeSelect" required></select>
+    </label><br /><br />
+
+    <label>Наименование: <input type="text" name="name" required /></label><br /><br />
+
+    <label>Мин. цена (₽): <input type="number" name="minPrice" step="0.01" required /></label><br /><br />
+
+    <label>Тип материала:
+      <select name="material" id="materialSelect" required></select>
+    </label><br /><br />
+
+    <button type="submit">Сохранить</button>
+  </form>
+
+  <p style="margin-top: 20px;">
+  <button onclick="history.back()">← Вернуться назад</button>
+</p>
+
+  <script src="scripts/add_edit.js"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+  <link rel="icon" href="Комфорт.ico" />
+<img src="Комфорт.png" alt="Логотип компании" width="150" />
+<link rel="stylesheet" href="style.css" />
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Калькулятор расхода сырья</title>
+  <style>
+    label { display: block; margin: 8px 0 4px; }
+    input { width: 100px; }
+    button { margin-top: 12px; }
+    #result { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Калькулятор расхода сырья</h1>
+  <form id="calc-form">
+    <label>ID продукта: <input type="text" id="productId" required /></label>
+    <label>Количество: <input type="number" id="quantity" min="1" value="1" required /></label>
+    <fieldset>
+      <legend>Размеры (в условных единицах):</legend>
+      <label>Длина: <input type="number" id="length" min="0" step="0.01" /></label>
+      <label>Ширина: <input type="number" id="width" min="0" step="0.01" /></label>
+      <label>Высота: <input type="number" id="height" min="0" step="0.01" /></label>
+    </fieldset>
+    <label>Потери (%) : <input type="number" id="wastePercent" min="0" step="0.1" value="0" /></label>
+    <button type="submit">Рассчитать</button>
+  </form>
+
+  <div id="result"></div>
+  <p style="margin-top: 20px;">
+  <button onclick="history.back()">← Вернуться назад</button>
+</p>
+  <script>
+  window.addEventListener('DOMContentLoaded', async () => {
+  const params = new URLSearchParams(window.location.search);
+  const productIdFromUrl = params.get('id') || params.get('productId');
+  if (productIdFromUrl) {
+    document.getElementById('productId').value = productIdFromUrl;
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/products/${productIdFromUrl}/waste-percent`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.wastePercent !== undefined) {
+          document.getElementById('wastePercent').value = data.wastePercent;
+        }
+      }
+    } catch (e) {
+      console.error('Не удалось загрузить процент потерь материала', e);
+    }
+  }
+});
+
+const form = document.getElementById('calc-form');
+const resultDiv = document.getElementById('result');
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+
+  const productId = document.getElementById('productId').value.trim();
+  const quantity = Number(document.getElementById('quantity').value);
+  const length = parseFloat(document.getElementById('length').value);
+  const width = parseFloat(document.getElementById('width').value);
+  const height = parseFloat(document.getElementById('height').value);
+  const wastePercent = parseFloat(document.getElementById('wastePercent').value) || 0;
+
+  // Проверяем, что все размеры указаны, иначе null
+  const size = (!isNaN(length) && !isNaN(width) && !isNaN(height)) ? { length, width, height } : null;
+
+  try {
+    const res = await fetch('http://localhost:3000/api/calc/raw-material', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId, quantity, size, wastePercent })
+    });
+
+    if (!res.ok) {
+      alert(`Ошибка сервера: ${res.status}`);
+      resultDiv.textContent = 'Сервер вернул ошибку.';
+      return;
+    }
+
+    const data = await res.json();
+
+    if (data.error) {
+      alert('Ошибка: ' + data.error);
+      resultDiv.textContent = 'Ошибка: ' + data.error;
+      return;
+    }
+
+    if (!data.totalRawMaterial) {
+      alert('Ошибка расчёта. Возможно, отсутствуют параметры или данные.');
+      resultDiv.textContent = 'Ошибка расчёта.';
+      return;
+    }
+
+    resultDiv.textContent = `Общий расход сырья: ${data.totalRawMaterial} условных единиц.`;
+
+  } catch (err) {
+    alert('Ошибка соединения с сервером');
+    resultDiv.textContent = 'Ошибка при запросе к серверу.';
+    console.error(err);
+  }
+});
+
+</script>
+
+
+</body>
+</html>
